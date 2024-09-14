@@ -1,0 +1,5 @@
+lightning
+pillow
+pycocotools
+torch
+torchvision
