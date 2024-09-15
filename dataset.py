@@ -24,16 +24,23 @@ class GRIDEYEDataset(Dataset):
         img_id = self.ids[index] if self.coco else index
 
         if self.coco:
+            # Gets all annotation ids for given image id
             ann_ids = self.coco.getAnnIds(imgIds=img_id)
             coco_annotation = self.coco.loadAnns(ann_ids)
             path = self.coco.loadImgs(img_id)[0]['file_name']
+
+            # Open current image in the dataloader
             path = os.path.join('images', path)
             img = Image.open(os.path.join(self.root, path))
+
+            # Get number of objects in image
             num_objs = len(coco_annotation)
 
             boxes = []
             category_ids = []
             categories = [0, 1, 2, 3, 4, 5, 7, 8, 9, 10, 11]
+
+            # For each object, get its bounding box
             for i in range(num_objs):
                 xmin = coco_annotation[i]["bbox"][0]
                 ymin = coco_annotation[i]["bbox"][1]
@@ -88,6 +95,7 @@ class DataModule(LightningDataModule):
         super().__init__()
         self.batch_size = 10
         self.data_dir = data_dir
+        self.image_dir = os.path.join(self.data_dir, 'images')
         self.transforms = get_transform()
         self.dataloader_params = {
             'batch_size': 1,

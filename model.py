@@ -1,3 +1,4 @@
+import config
 from lightning import LightningModule
 from torch.optim import SGD
 from torchvision.models.detection import fasterrcnn_resnet50_fpn
@@ -10,6 +11,10 @@ class Model(LightningModule):
         self.model = fasterrcnn_resnet50_fpn(pretrained=False)
         in_features = self.model.roi_heads.box_predictor.cls_score.in_features
         self.model.roi_heads.box_predictor = FastRCNNPredictor(in_features, num_classes)
+
+        self.lr = config.LEARNING_RATE
+        self.momentum = config.MOMENTUM
+        self.weight_decay = config.WEIGHT_DECAY
 
     def forward(self, imgs, annotations):
         return self.model(imgs, annotations)
@@ -30,4 +35,4 @@ class Model(LightningModule):
 
     def configure_optimizers(self):
         params = [p for p in self.model.parameters() if p.requires_grad]
-        return SGD(params, lr=0.001, momentum=0.9, weight_decay=0.0005)
+        return SGD(params, lr=self.lr, momentum=self.momentum, weight_decay=self.weight_decay)
