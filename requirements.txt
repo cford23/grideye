@@ -1,4 +1,5 @@
 lightning
+pandas
 pillow
 pycocotools
 torch
