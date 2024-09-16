@@ -12,7 +12,8 @@ trainer = Trainer(
     max_epochs=config.EPOCHS,
     accelerator=config.ACCELERATOR,
     devices=config.DEVICES,
-    enable_checkpointing=config.CHECKPOINTING
+    enable_checkpointing=config.CHECKPOINTING,
+    log_every_n_steps=config.LOG_N_STEPS
 )
 
 trainer.fit(model, data_module)

@@ -28,6 +28,7 @@ class Model(LightningModule):
         annotations = [{k: v.to(self.device) for k, v in t.items()} for t in annotations]
         loss_dict = self(imgs, annotations)
         losses = sum(loss for loss in loss_dict.values())
+        self.log('train_loss', losses)
         return losses
 
     def predict_step(self, batch, batch_idx, dataloader_idx=0):
