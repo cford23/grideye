@@ -27,7 +27,6 @@ class GRIDEYEDataset(Dataset):
             self.coco = COCO(annotation)
             self.ids = list(sorted(self.coco.imgs.keys()))
             self.categories = self.coco.loadCats(self.coco.getCatIds())
-            logger.debug(f'Number of categories: {len(self.categories)}')
 
     def __getitem__(self, index):
         img_id = self.ids[index] if self.coco else index
@@ -41,7 +40,7 @@ class GRIDEYEDataset(Dataset):
             # Open current image in the dataloader
             path = os.path.join('images', path)
             img = Image.open(os.path.join(self.root, path))
-            logger.debug(f'Image: {path}')
+            # logger.debug(f'Image: {path}')
 
             # Get number of objects in image
             num_objs = len(coco_annotation)
@@ -57,7 +56,7 @@ class GRIDEYEDataset(Dataset):
                 boxes.append([xmin, ymin, xmax, ymax])
 
                 category_id = coco_annotation[i]['category_id']
-                logger.debug(f'Object {i + 1}/{num_objs}    Category ID: {category_id}')
+                # logger.debug(f'Object {i + 1}/{num_objs}    Category ID: {category_id}')
                 labels.append(category_id)
 
             boxes = torch.as_tensor(boxes, dtype=torch.float32)
@@ -105,26 +104,26 @@ def collate_fn(batch):
 class DataModule(LightningDataModule):
     def __init__(self, data_dir):
         super().__init__()
-        self.batch_size = 10
         self.data_dir = data_dir
         self.image_dir = os.path.join(self.data_dir, 'images')
         self.transforms = get_transform()
-        self.dataloader_params = {
-            'batch_size': 1,
-            'shuffle': True,
-            'num_workers': 2,
-            'collate_fn': collate_fn
-        }
         self.filename = 'annotations.json'
+        
+        # Dataloader parameters
+        self.batch_size = 4
+        self.num_workers = 0
 
     def setup(self, stage):
         if stage == 'fit':
             train_coco = os.path.join(self.data_dir, self.filename)
             dataset = GRIDEYEDataset(root=self.data_dir, annotation=train_coco, transforms=self.transforms)
+            
+            # Set validation size to be 20% of train size
             train_set_size = int(len(dataset) * 0.8)
             valid_set_size = len(dataset) - train_set_size
-            generator = torch.Generator().manual_seed(23)
-            self.train_dataset, self.valid_dataset = random_split(dataset, [train_set_size, valid_set_size], generator=generator)
+
+            seed = torch.Generator().manual_seed(23)
+            self.train_dataset, self.valid_dataset = random_split(dataset, [train_set_size, valid_set_size], generator=seed)
 
         if stage == 'test':
             test_coco = os.path.join(self.data_dir, self.filename)
@@ -134,13 +133,10 @@ class DataModule(LightningDataModule):
             self.predict_dataset = GRIDEYEDataset(root=self.data_dir, transforms=self.transforms)
 
     def train_dataloader(self):
-        return DataLoader(self.train_dataset, **self.dataloader_params)
+        return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers, collate_fn=collate_fn)
 
     def val_dataloader(self):
-        return DataLoader(self.valid_dataset, **self.dataloader_params)
+        return DataLoader(self.valid_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers, collate_fn=collate_fn)
 
     def test_dataloader(self):
-        return DataLoader(self.test_dataset, **self.dataloader_params)
-
-    def predict_dataloader(self):
-        return DataLoader(self.predict_dataset, **self.dataloader_params)
+        return DataLoader(self.test_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers, collate_fn=collate_fn)

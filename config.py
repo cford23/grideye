@@ -3,11 +3,11 @@ import logging
 DATA_DIR = 'data/'
 
 # Trainer parameters
-EPOCHS = 5
+EPOCHS = 1
 ACCELERATOR = 'auto'
 DEVICES = 1
 CHECKPOINTING = False
-LOG_N_STEPS = 12
+LOG_N_STEPS = 1
 
 # Hyperparameters
 LEARNING_RATE = 0.001
