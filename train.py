@@ -5,7 +5,7 @@ from model import Model
 from torch import save
 
 
-NUM_CATEGORIES = 11
+NUM_CATEGORIES = 11 + 1 # + 1 for background?
 
 data_module = DataModule(data_dir=config.DATA_DIR)
 model = Model(num_classes=NUM_CATEGORIES)
@@ -23,10 +23,10 @@ trainer.validate(model, data_module)
 trainer.test(model, data_module)
 
 # Save model
-# optimizer = model.configure_optimizers()
-# saved_model_path = 'saved_model.pth'
-# save({
-#     'epoch': config.EPOCHS,
-#     'model_state_dict': model.state_dict(),
-#     'optimizer_state_dict': optimizer.state_dict(),
-# }, saved_model_path)
+optimizer = model.configure_optimizers()
+saved_model_path = 'saved_model.pth'
+save({
+    'epoch': config.EPOCHS,
+    'model_state_dict': model.state_dict(),
+    'optimizer_state_dict': optimizer.state_dict(),
+}, saved_model_path)
