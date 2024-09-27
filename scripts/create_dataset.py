@@ -48,14 +48,15 @@ data = {
         { 'supercategory': 'building', 'id': 3, 'name': 'pokecenter' },
         { 'supercategory': 'building', 'id': 4, 'name': 'pokemart' },
         { 'supercategory': 'building', 'id': 5, 'name': 'house' },
+        { 'supercategory': 'building', 'id': 6, 'name': 'building' },
 
-        { 'id': 6, 'name': 'open' },
-        { 'id': 7, 'name': 'door' },
+        { 'id': 7, 'name': 'open' },
+        { 'id': 8, 'name': 'door' },
         
-        { 'supercategory': 'character', 'id': 8, 'name': 'npc' },
-        { 'supercategory': 'character', 'id': 9, 'name': 'player' },
+        { 'supercategory': 'character', 'id': 9, 'name': 'npc' },
+        { 'supercategory': 'character', 'id': 10, 'name': 'player' },
         
-        { 'id': 10, 'name': 'ledge' },
+        { 'id': 11, 'name': 'ledge' },
     ]
 }
 
