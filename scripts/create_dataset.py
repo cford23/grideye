@@ -8,6 +8,7 @@ from PIL import Image
 
 NUM_SCREEN_ROWS = 9
 NUM_SCREEN_COLS = 15
+IMAGE_SIZE = (720, 432)
 
 
 def get_category_id(categories, name):
@@ -68,7 +69,6 @@ image = None
 tile_length = None
 image_id = 0
 annot_count = 1
-new_image_size = (1440, 864)
 for index, row in df.iterrows():
     if row['image'] != image_name:
         image_id += 1
@@ -76,7 +76,7 @@ for index, row in df.iterrows():
         image_name = row['image']
         image_path = os.path.join('images', image_name)
         image = Image.open(image_path)
-        image = image.resize(new_image_size)
+        image = image.resize(IMAGE_SIZE)
         tile_length = image.size[1] // NUM_SCREEN_ROWS
         assert tile_length == image.size[0] // NUM_SCREEN_COLS, 'Tile lengths do not match'
 
