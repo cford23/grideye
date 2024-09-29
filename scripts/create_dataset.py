@@ -57,6 +57,9 @@ data = {
         { 'supercategory': 'character', 'id': 10, 'name': 'player' },
         
         { 'id': 11, 'name': 'ledge' },
+
+        { 'id': 12, 'name': 'textbox location' },
+        { 'id': 13, 'name': 'water' }
     ]
 }
 
