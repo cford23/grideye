@@ -1,4 +1,4 @@
-from config import logger
+from config import logger, IMAGE_WIDTH, IMAGE_HEIGHT
 from lightning import LightningDataModule
 import os
 from PIL import Image
@@ -22,6 +22,7 @@ class GRIDEYEDataset(Dataset):
         self.coco = None
         self.ids = []
         self.categories = []
+        self.image_size = (IMAGE_WIDTH, IMAGE_HEIGHT)
 
         if annotation is not None:
             self.coco = COCO(annotation)
@@ -38,9 +39,10 @@ class GRIDEYEDataset(Dataset):
             path = self.coco.loadImgs(img_id)[0]['file_name']
 
             # Open current image in the dataloader
-            path = os.path.join('images', path)
             img = Image.open(os.path.join(self.root, path))
-            # logger.debug(f'Image: {path}')
+
+            # Resize image
+            img = img.resize(self.image_size)
 
             # Get number of objects in image
             num_objs = len(coco_annotation)
@@ -67,7 +69,7 @@ class GRIDEYEDataset(Dataset):
             for i in range(num_objs):
                 areas.append(coco_annotation[i]["area"])
             areas = torch.as_tensor(areas, dtype=torch.float32)
-            
+
             iscrowd = torch.zeros((num_objs,), dtype=torch.int64)
 
             my_annotation = {
@@ -78,6 +80,7 @@ class GRIDEYEDataset(Dataset):
                 'iscrowd': iscrowd
             }
         else:
+            # Out of date
             path = os.path.join('images', f'{img_id}.png')
             img = Image.open(os.path.join(self.root, path))
             my_annotation = {}
@@ -107,17 +110,17 @@ class DataModule(LightningDataModule):
         self.data_dir = data_dir
         self.image_dir = os.path.join(self.data_dir, 'images')
         self.transforms = get_transform()
-        self.filename = 'annotations.json'
-        
+        self.filename = 'result.json'
+
         # Dataloader parameters
-        self.batch_size = 4
+        self.batch_size = 10
         self.num_workers = 0
 
     def setup(self, stage):
         if stage == 'fit':
             train_coco = os.path.join(self.data_dir, self.filename)
             dataset = GRIDEYEDataset(root=self.data_dir, annotation=train_coco, transforms=self.transforms)
-            
+
             # Set validation size to be 20% of train size
             train_set_size = int(len(dataset) * 0.8)
             valid_set_size = len(dataset) - train_set_size
@@ -128,9 +131,6 @@ class DataModule(LightningDataModule):
         if stage == 'test':
             test_coco = os.path.join(self.data_dir, self.filename)
             self.test_dataset = GRIDEYEDataset(root=self.data_dir, annotation=test_coco, transforms=self.transforms)
-
-        if stage == 'predict':
-            self.predict_dataset = GRIDEYEDataset(root=self.data_dir, transforms=self.transforms)
 
     def train_dataloader(self):
         return DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, num_workers=self.num_workers, collate_fn=collate_fn)

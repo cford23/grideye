@@ -28,8 +28,11 @@ class Model(LightningModule):
         self.momentum = config.MOMENTUM
         self.weight_decay = config.WEIGHT_DECAY
 
-    def forward(self, imgs, annotations):
-        return self.model(imgs, annotations)
+    def forward(self, imgs, annotations=None):
+        if annotations is not None:
+            return self.model(imgs, annotations)
+        else:
+            return self.model(imgs)
 
     def _common_step(self, batch, batch_idx):
         imgs, annotations = batch
@@ -48,7 +51,7 @@ class Model(LightningModule):
         imgs, annotations = self._common_step(batch, batch_idx)
         loss = calculate_loss(self.model, imgs, annotations)
         self.log('val_loss', loss)
-    
+
     def test_step(self, batch, batch_idx):
         imgs, annotations = self._common_step(batch, batch_idx)
         loss = calculate_loss(self.model, imgs, annotations)
