@@ -15,6 +15,7 @@ import time
 
 #################### FIND WINDOW BY NAME ####################
 def find_window_by_name(window_name):
+    # Only gets windows if script is run in VSCode (doesn't work in Terminal for some reason)
     window_list = CG.CGWindowListCopyWindowInfo(CG.kCGWindowListOptionOnScreenOnly, CG.kCGNullWindowID)
     for window in window_list:
         if window_name.lower() in window.get('kCGWindowName', '').lower():
