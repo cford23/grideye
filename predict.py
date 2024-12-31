@@ -13,11 +13,10 @@ image_path = os.path.join(config.DATA_DIR, 'images', image_filename)
 print('Image with correct boxes')
 utils.display_original_image(image_path)
 
-model = Model(num_classes=config.NUM_CATEGORIES)
-model.load_state_dict(torch.load(config.MODEL_PATH))
-model.eval()
+model = utils.load_model()
+image = Image.open(image_path)
 
-prediction = utils.detect_objects(model, image_path)
+prediction = utils.detect_objects(model, image)
 print('Image with predicted boxes')
 utils.display_objects(image_path, prediction)
 
@@ -27,7 +26,7 @@ utils.display_objects(image_path, prediction, round_pred=True)
 # TODO: Move the following into a function that can be used multiple times
 
 # Filter model object predictions
-filtered_preds = utils.filter_predictions(prediction, config.coco, verbose=False)
+filtered_preds = utils.filter_predictions(prediction, verbose=False)
 
 # Display filtered objects on original image
 print('Image with filtered rounded prediction boxes')

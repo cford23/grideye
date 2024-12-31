@@ -1,6 +1,7 @@
 import config
 from functools import wraps
 import matplotlib.pyplot as plt
+from model import Model
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 import time
@@ -9,9 +10,9 @@ import torchvision.transforms as T
 
 
 #################### GET IMAGE ID ####################
-def get_image_id(image_path, coco):
-    for image_id in coco.getImgIds():
-        image_info = coco.loadImgs(image_id)[0]
+def get_image_id(image_path):
+    for image_id in config.COCO.getImgIds():
+        image_info = config.COCO.loadImgs(image_id)[0]
         if image_info['file_name'] in image_path:
             return image_info['id']
     return None
@@ -29,9 +30,9 @@ def display_original_image(image_path):
     image = Image.open(image_path)
     draw = ImageDraw.Draw(image)
 
-    image_id = get_image_id(image_path, config.coco)
+    image_id = get_image_id(image_path, config.COCO)
 
-    annotations = get_image_annotations(image_id, config.coco)
+    annotations = get_image_annotations(image_id, config.COCO)
     print('Number of annotations:', len(annotations))
     for ann in annotations:
         x, y, width, height = ann['bbox']
@@ -57,12 +58,11 @@ def timeit(func):
 
 #################### DETECT OBJECTS ####################
 @timeit
-def detect_objects(model, image_path):
+def detect_objects(model: Model, image: Image):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model.to(device)
 
     transform = T.Compose([T.ToTensor()])
-    image = Image.open(image_path)
     image_tensor = transform(image).to(device)
 
     with torch.no_grad():
@@ -72,12 +72,12 @@ def detect_objects(model, image_path):
 
 
 #################### ROUND BOX ####################
-def round_box(bbox, tile_length):
+def round_box(bbox):
     x1, y1, x2, y2 = bbox
 
     def round_to_nearest(value):
-        lower_bound = (value // tile_length) * tile_length
-        upper_bound = np.ceil(value / tile_length) * tile_length
+        lower_bound = (value // config.TILE_LENGTH) * config.TILE_LENGTH
+        upper_bound = np.ceil(value / config.TILE_LENGTH) * config.TILE_LENGTH
 
         # Check which is closer
         if abs(value - lower_bound) <= abs(value - upper_bound):
@@ -93,26 +93,17 @@ def round_box(bbox, tile_length):
     return [x1_rounded, y1_rounded, x2_rounded, y2_rounded]
 
 
-#################### GET CATEGORY BY ID ####################
-def get_category_by_id(categories, category_id):
-    for category in categories:
-        if category['id'] == category_id:
-            return category['name']
-    print(f'Category name for category ID {category_id} not found')
-    return None
-
-
 #################### GET BOX INDICES ####################
-def get_box_indices(box, tile_length, num_rows, num_cols):
+def get_box_indices(box):
     x, y, x2, y2 = box
     width = x2 - x
     height = y2 - y
 
-    col_idx = x // tile_length
-    row_idx = y // tile_length
+    col_idx = x // config.TILE_LENGTH
+    row_idx = y // config.TILE_LENGTH
 
-    width_tiles = width // tile_length
-    height_tiles = height // tile_length
+    width_tiles = width // config.TILE_LENGTH
+    height_tiles = height // config.TILE_LENGTH
 
     indices_in_box = [(row, col) for row in range(row_idx, row_idx + height_tiles)
                                  for col in range(col_idx, col_idx + width_tiles)]
@@ -156,17 +147,8 @@ def display_objects(image_path, prediction, round_pred=False, verbose=False, dra
     plt.show()
 
 
-#################### GET CATEGORY NAME ####################
-def get_category_name(category_id, coco):
-    for _, category in coco.cats.items():
-        if category['id'] == category_id:
-            return category['name']
-    print(f'Category name for category ID {category_id} not found')
-    return None
-
-
 #################### FILTER PREDICTIONS ####################
-def filter_predictions(predictions, coco, verbose=False):
+def filter_predictions(predictions, verbose=False):
     objects = []
     for box, label, score in zip(predictions['boxes'], predictions['labels'], predictions['scores']):
         box = [round(i.item()) for i in box.cpu()]
@@ -189,15 +171,15 @@ def filter_predictions(predictions, coco, verbose=False):
     filtered_data = list(unique_data.values())
 
     # Filter out any low scoring objects
-    SCORE_THRESHOLD = 0.8
-    filtered_data = [item for item in filtered_data if item['score'] >= SCORE_THRESHOLD]
+    filtered_data = [item for item in filtered_data if item['score'] >= config.SCORE_THRESHOLD]
 
     if verbose:
         print('Number of detected objects after filtering:', len(filtered_data))
 
     # Iterate through remaining items and add category name
     for item in filtered_data:
-        item['category'] = get_category_name(item['label'], coco)
+        # Get category name based on category ID
+        item['category'] = config.COCO.cats[item['label']]['name']
         if verbose:
             print('Location:', item['box'])
             print('Category:', item['category'])
@@ -205,3 +187,40 @@ def filter_predictions(predictions, coco, verbose=False):
             print()
 
     return filtered_data
+
+
+#################### LOAD MODEL ####################
+def load_model():
+    model = Model(num_classes=config.NUM_CATEGORIES)
+    model.load_state_dict(torch.load(config.MODEL_PATH))
+    model.eval()
+    return model
+
+
+#################### GET ENVIRONMENT STATE ####################
+def get_environment_state(model: Model, image: Image):
+    # Get object detection predictions from given image
+    predictions = detect_objects(model, image)
+
+    # Filter the bounding box predictions
+    filtered_predictions = filter_predictions(predictions)
+
+    # For remaining predictions, convert to 2D array
+    state = np.ones((config.NUM_SCREEN_ROWS, config.NUM_SCREEN_COLS))
+
+    for item in filtered_predictions:
+        # Get a list of indices that box covers
+        box_indices = get_box_indices(item['box'])
+
+        # For each index, change value from 1 to correct value
+        square_code = next((k for k, v in config.SQUARE_CODES.items() if item['category'] in v), None)
+        if square_code is None:
+            print('Failed to find square code for', item['category'])
+            break
+
+        for idx in box_indices:
+            row, col = idx
+            state[row][col] = square_code
+
+    # returns 2D array of integers representing the game's current state
+    return state

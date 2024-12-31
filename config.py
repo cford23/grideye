@@ -1,11 +1,11 @@
 import logging
 import os
-from pycocotools.coco import COCO
+from pycocotools import coco
 
 
 DATA_DIR = 'data/'
-coco = COCO(os.path.join(DATA_DIR, 'result.json'))
-NUM_CATEGORIES = len(coco.cats) + 1 # for background
+COCO = coco.COCO(os.path.join(DATA_DIR, 'result.json'))
+NUM_CATEGORIES = len(COCO.cats) + 1 # for background
 
 # Image details
 IMAGE_WIDTH = 720
@@ -37,3 +37,16 @@ logger.addHandler(console_handler)
 
 # Saved model path
 MODEL_PATH = os.path.join(DATA_DIR, 'grideye_model.pth')
+
+# Filter score threshold for bounding boxes
+SCORE_THRESHOLD = 0.8
+
+# Integer to be converted to from box label
+SQUARE_CODES = {
+    0: ['house', 'ledge boundary', 'pokecenter', 'pokemart', 'tree'],
+    2: ['npc'],
+    4: ['ledge'],
+    5: ['player'],
+    6: ['grass'],
+    7: ['sign']
+}
