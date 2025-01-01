@@ -10,7 +10,8 @@ from PIL import Image
 import utils
 
 
-image_filename = 'f36e6c12-5ytnuhwh.png'
+# Load an existing image
+image_filename = 'f98f078f-image_40.png'
 image_path = os.path.join(config.DATA_DIR, 'images', image_filename)
 image = Image.open(image_path)
 

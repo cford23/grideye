@@ -215,6 +215,9 @@ def get_environment_state(model: Model, image: Image):
     # Get object detection predictions from given image
     predictions = detect_objects(model, image)
 
+    # Organize predictions into correct format
+    predictions = organize_predictions(predictions)
+
     # Filter the bounding box predictions
     filtered_predictions = filter_predictions(predictions)
 

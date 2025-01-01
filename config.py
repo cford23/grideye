@@ -43,10 +43,13 @@ SCORE_THRESHOLD = 0.8
 
 # Integer to be converted to from box label
 SQUARE_CODES = {
-    0: ['house', 'ledge boundary', 'pokecenter', 'pokemart', 'tree'],
+    0: ['house', 'ledge boundary', 'pokecenter', 'pokemart', 'tree', 'boulder', 'professor lab'],
+    1: ['location', 'dialogue'],
     2: ['npc'],
+    3: ['door'],
     4: ['ledge'],
     5: ['player'],
     6: ['grass'],
-    7: ['sign']
+    7: ['sign'],
+    8: ['water']
 }
