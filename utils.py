@@ -1,4 +1,4 @@
-import config
+from . import config
 from functools import wraps
 import matplotlib.pyplot as plt
 from model import Model
