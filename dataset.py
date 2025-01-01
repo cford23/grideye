@@ -1,4 +1,4 @@
-from config import logger, IMAGE_WIDTH, IMAGE_HEIGHT
+from .config import IMAGE_WIDTH, IMAGE_HEIGHT
 from lightning import LightningDataModule
 import os
 from PIL import Image

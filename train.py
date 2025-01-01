@@ -1,8 +1,8 @@
-import config
-from dataset import DataModule
+from . import config
+from .dataset import DataModule
 from lightning import Trainer
 from lightning.pytorch.callbacks.early_stopping import EarlyStopping
-from model import Model
+from .model import Model
 import torch
 
 

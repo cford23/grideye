@@ -1,9 +1,7 @@
-import config
+from . import config
 import matplotlib.pyplot as plt
-from model import Model
 import os
 from PIL import Image, ImageDraw, ImageFont
-import torch
 import utils
 
 

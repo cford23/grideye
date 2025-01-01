@@ -1,4 +1,4 @@
-import config
+from . import config
 from PIL import Image
 import Quartz.CoreGraphics as CG
 

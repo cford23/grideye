@@ -1,4 +1,4 @@
-import config
+from . import config
 from lightning import LightningModule
 import torch
 from torch.optim import SGD

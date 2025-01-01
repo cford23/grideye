@@ -1,7 +1,7 @@
 from . import config
 from functools import wraps
 import matplotlib.pyplot as plt
-from model import Model
+from .model import Model
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 import time
