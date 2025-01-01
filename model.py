@@ -1,4 +1,10 @@
-from . import config
+try:
+    # Attempt relative import (works when run as part of a package)
+    from . import config
+except ImportError:
+    # Fallback to absolute import (works when run independently)
+    import config
+
 from lightning import LightningModule
 import torch
 from torch.optim import SGD

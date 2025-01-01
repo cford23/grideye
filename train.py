@@ -1,8 +1,16 @@
-from . import config
-from .dataset import DataModule
+try:
+    # Attempt relative import (works when run as part of a package)
+    from . import config
+    from .dataset import DataModule
+    from .model import Model
+except ImportError:
+    # Fallback to absolute import (works when run independently)
+    import config
+    from dataset import DataModule
+    from model import Model
+
 from lightning import Trainer
 from lightning.pytorch.callbacks.early_stopping import EarlyStopping
-from .model import Model
 import torch
 
 

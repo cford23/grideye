@@ -1,4 +1,10 @@
-from .config import IMAGE_WIDTH, IMAGE_HEIGHT
+try:
+    # Attempt relative import (works when run as part of a package)
+    from .config import IMAGE_WIDTH, IMAGE_HEIGHT
+except ImportError:
+    # Fallback to absolute import (works when run independently)
+    from config import IMAGE_WIDTH, IMAGE_HEIGHT
+
 from lightning import LightningDataModule
 import os
 from PIL import Image

@@ -1,49 +1,30 @@
-from . import config
-import matplotlib.pyplot as plt
+try:
+    # Attempt relative import (works when run as part of a package)
+    from . import config
+except ImportError:
+    # Fallback to absolute import (works when run independently)
+    import config
+
 import os
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image
 import utils
 
 
 image_filename = 'f36e6c12-5ytnuhwh.png'
 image_path = os.path.join(config.DATA_DIR, 'images', image_filename)
+image = Image.open(image_path)
 
-print('Image with correct boxes')
-utils.display_original_image(image_path)
+# Display image with correct boxes
+utils.display_original_image(image_path, title='Image with correct boxes')
 
+# Get object predictions and organize into correct format
 model = utils.load_model()
-image = Image.open(image_path)
+predictions = utils.detect_objects(model, image)
+predictions = utils.organize_predictions(predictions)
 
-prediction = utils.detect_objects(model, image)
-print('Image with predicted boxes')
-utils.display_objects(image_path, prediction)
+# Display image with predicted boxes
+utils.display_image(image_path, predictions, title='Image with predicted boxes')
 
-print('Image with rounded prediction boxes')
-utils.display_objects(image_path, prediction, round_pred=True)
-
-# TODO: Move the following into a function that can be used multiple times
-
-# Filter model object predictions
-filtered_preds = utils.filter_predictions(prediction, verbose=False)
-
-# Display filtered objects on original image
-print('Image with filtered rounded prediction boxes')
-image = Image.open(image_path)
-draw = ImageDraw.Draw(image)
-font = ImageFont.load_default()
-
-color = 'red'
-for det_object in filtered_preds:
-    draw.rectangle(det_object['box'], outline=color, width=3)
-    category_name = utils.get_category_name(det_object['label'], config.coco)
-    score = det_object['score']
-    draw.text(
-        (det_object['box'][0], det_object['box'][1]),
-        f'Class: {category_name}, Score: {score:.2f}',
-        fill=color,
-        font=font
-    )
-
-plt.imshow(image)
-plt.axis('off')
-plt.show()
+# Display image with filtered prediction boxes
+filtered_preds = utils.filter_predictions(predictions)
+utils.display_image(image_path, filtered_preds, title='Image with filtered prediction boxes')

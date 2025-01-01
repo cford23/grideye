@@ -1,7 +1,14 @@
-from . import config
+try:
+    # Attempt relative import (works when run as part of a package)
+    from . import config
+    from .model import Model
+except ImportError:
+    # Fallback to absolute import (works when run independently)
+    import config
+    from model import Model
+
 from functools import wraps
 import matplotlib.pyplot as plt
-from .model import Model
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 import time
@@ -26,17 +33,20 @@ def get_image_annotations(image_id, coco):
 
 
 #################### DISPLAY ORIGINAL IMAGE ####################
-def display_original_image(image_path):
+def display_original_image(image_path, title=None):
     image = Image.open(image_path)
     draw = ImageDraw.Draw(image)
 
-    image_id = get_image_id(image_path, config.COCO)
+    image_id = get_image_id(image_path)
 
     annotations = get_image_annotations(image_id, config.COCO)
     print('Number of annotations:', len(annotations))
     for ann in annotations:
         x, y, width, height = ann['bbox']
         draw.rectangle([x, y, x + width, y + height], outline='red', width=3)
+
+    if title is not None:
+        plt.title(title)
 
     plt.imshow(image)
     plt.axis('off')
@@ -111,8 +121,25 @@ def get_box_indices(box):
     return indices_in_box
 
 
-#################### DISPLAY OBJECTS ####################
-def display_objects(image_path, prediction, round_pred=False, verbose=False, draw_grid=False):
+#################### ORGANIZE PREDICTIONS ####################
+def organize_predictions(predictions):
+    # restructures predictions so they're all grouped
+    # together instead of in separate lists
+    objects = []
+    for box, label, score in zip(predictions['boxes'], predictions['labels'], predictions['scores']):
+        box = [round(i.item()) for i in box.cpu()]
+        category_name = config.COCO.cats[label.item()]['name']
+        objects.append({
+            'box': box,
+            'label': label.item(),
+            'category': category_name,
+            'score': score.item()
+        })
+    return objects
+
+
+#################### DISPLAY IMAGE ####################
+def display_image(image_path, objects=[], title=None, draw_grid=False):
     image = Image.open(image_path)
     draw = ImageDraw.Draw(image)
     font = ImageFont.load_default()
@@ -125,23 +152,20 @@ def display_objects(image_path, prediction, round_pred=False, verbose=False, dra
         # Draw horizontal lines
         for y in range(0, config.IMAGE_HEIGHT, config.TILE_LENGTH):
             draw.line([(0, y), (config.IMAGE_WIDTH, y)], fill='black', width=1)
-
+    
     color = 'red'
-    for box, label, score in zip(prediction['boxes'], prediction['labels'], prediction['scores']):
-        box = [round(i.item()) for i in box.cpu()]
-        if round_pred:
-            box = round_box(box, config.TILE_LENGTH)
-        label = label.item()
-        score = score.item()
-        if verbose:
-            print('Box:', box)
-            print('Label:', label)
-            print('Score:', score)
-            print()
+    for item in objects:
+        draw.rectangle(item['box'], outline=color, width=3)
+        draw.text(
+            (item['box'][0], item['box'][1]),
+            f'Class: {item["category"]}, Score: {item["score"]:.2f}',
+            fill=color,
+            font=font
+        )
 
-        draw.rectangle(box, outline=color, width=3)
-        draw.text((box[0], box[1]), f'Class: {label}, Score: {score:.2f}', fill=color, font=font)
-
+    if title is not None:
+        plt.title(title)
+    
     plt.imshow(image)
     plt.axis('off')
     plt.show()
@@ -149,18 +173,12 @@ def display_objects(image_path, prediction, round_pred=False, verbose=False, dra
 
 #################### FILTER PREDICTIONS ####################
 def filter_predictions(predictions, verbose=False):
-    objects = []
-    for box, label, score in zip(predictions['boxes'], predictions['labels'], predictions['scores']):
-        box = [round(i.item()) for i in box.cpu()]
-        box = round_box(box, config.TILE_LENGTH)
-        objects.append({
-            'box': box,
-            'label': label.item(),
-            'score': score.item()
-        })
-
+    # Round boxes to nearest tile
+    for item in predictions:
+        item['box'] = round_box(item['box'])
+    
     # Removes any locations that have multiple objects predictions and keeps the highest scored object
-    sorted_objects = sorted(objects, key=lambda x: (x['box'], -x['score']))
+    sorted_objects = sorted(predictions, key=lambda x: (x['box'], -x['score']))
     unique_data = {}
     for item in sorted_objects:
         values = tuple(item['box'])  # Convert list to tuple to use as a dictionary key
@@ -175,12 +193,7 @@ def filter_predictions(predictions, verbose=False):
 
     if verbose:
         print('Number of detected objects after filtering:', len(filtered_data))
-
-    # Iterate through remaining items and add category name
-    for item in filtered_data:
-        # Get category name based on category ID
-        item['category'] = config.COCO.cats[item['label']]['name']
-        if verbose:
+        for item in filtered_data:
             print('Location:', item['box'])
             print('Category:', item['category'])
             print('Score:', item['score'])
