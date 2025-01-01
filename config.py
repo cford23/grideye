@@ -3,7 +3,7 @@ import os
 from pycocotools import coco
 
 
-DATA_DIR = 'data/'
+DATA_DIR = os.path.join(os.getcwd(), 'data')
 COCO = coco.COCO(os.path.join(DATA_DIR, 'result.json'))
 NUM_CATEGORIES = len(COCO.cats) + 1 # for background
 
