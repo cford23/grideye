@@ -98,6 +98,15 @@ def take_screenshot(window_name: str) -> Image:
     return image
 
 
+#################### ACTIVATE WINDOW ####################
+def activate_window(window_name: str) -> None:
+    window = find_window_by_name(window_name)
+    window_bounds = window.get('kCGWindowBounds')
+    x = window_bounds.get('X')
+    y = window_bounds.get('Y')
+    pyautogui.click(x, y)
+
+
 #################### SEND ACTION ####################
 def send_action(action: str) -> None:
     key = config.KEY_ACTIONS[action]
