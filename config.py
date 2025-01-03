@@ -53,3 +53,14 @@ SQUARE_CODES = {
     7: ['sign'],
     8: ['water']
 }
+
+# Each action's key
+KEY_ACTIONS = {
+    'up': 'w',
+    'down': 's',
+    'left': 'a',
+    'right': 'd',
+    'a': 'l',
+    'b': 'k',
+    'start': 'enter'
+}

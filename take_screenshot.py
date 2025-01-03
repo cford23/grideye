@@ -27,7 +27,7 @@ def main():
         if interval <= 0:
             interval = None
 
-    window_name = 'Pokémon: Emerald Version'
+    window_name = 'Pokemon - Emerald Version'
     try:
         while True:
             # Take screenshot of window

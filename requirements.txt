@@ -8,3 +8,5 @@ torchvision
 pyobjc-framework-Quartz
 
 numpy<2
+
+PyAutoGUI

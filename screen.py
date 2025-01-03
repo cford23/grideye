@@ -6,7 +6,9 @@ except ImportError:
     import config
 
 from PIL import Image
+import pyautogui
 import Quartz.CoreGraphics as CG
+import time
 
 
 #################### FIND WINDOW BY NAME ####################
@@ -94,3 +96,11 @@ def take_screenshot(window_name: str) -> Image:
     print(' Captured')
 
     return image
+
+
+#################### SEND ACTION ####################
+def send_action(action: str) -> None:
+    key = config.KEY_ACTIONS[action]
+    pyautogui.keyDown(key)
+    time.sleep(0.1)
+    pyautogui.keyUp(key)
